@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/pacificadora/megaProject-StudyNotion-backend/issues"
   },
-  "homepage": "https://github.com/pacificadora/megaProject-StudyNotion-backend#readme"
+  "homepage": "https://github.com/pacificadora/megaProject-StudyNotion-backend#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
