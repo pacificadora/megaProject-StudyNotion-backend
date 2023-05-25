@@ -15,7 +15,7 @@ exports.createSection = async (req, res) => {
       courseId,
       { $push: { courseContent: newSection._id } },
       { new: true }
-    ).populate({ path: "section", populate: { path: "subSection" } });
+    ).populate({ path: "courseContent", populate: { path: "subSection" } });
 
     //HW: how to use populate to replace section/subsection both in the updatedCourseDetails
     return res.status(400).json({
