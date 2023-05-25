@@ -1,5 +1,8 @@
+const CourseModel = require("../models/CourseModel");
 const ProfileModel = require("../models/ProfileModel");
 const UserModel = require("../models/UserModel");
+const { uploadImageToCloudinary } = require("../utils/imageUploader");
+require("dotenv").config();
 //updateProfile
 
 exports.updateProfile = async (req, res) => {
@@ -41,7 +44,7 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-exports.deleteProfile = async () => {
+exports.deleteProfile = async (req, res) => {
   try {
     //get id
     const id = req.user.id;
@@ -75,4 +78,95 @@ exports.deleteProfile = async () => {
   }
 };
 
-exports.getAll;
+exports.getAllUserDetails = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userDetails = await UserModel.findById({ _id: userId })
+      .populate("additionalDetails")
+      .exec();
+    if (!userDetails) {
+      return res.status(400).json({
+        success: false,
+        message: "User details cannot be found",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "User details found",
+      data: userDetails,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "something went wrong",
+    });
+  }
+};
+
+exports.updateDisplayPicture = async (req, res) => {
+  try {
+    //get the userId
+    const userId = req.user.id;
+    //get the image
+    const pic = req.files.picture;
+    //get the user
+    const userDetails = await UserModel.findById({ _id: userId });
+    //validate the user
+    if (!userDetails) {
+      return res.status(400).json({
+        success: false,
+        message: "user not found with the given id",
+      });
+    }
+    //upload on cloudinary
+    const image = await uploadImageToCloudinary(
+      pic,
+      process.env.FOLDER_NAME,
+      1000,
+      1000
+    );
+    //update the user display picture
+    const updatedProfile = await UserModel.findByIdAndUpdate(
+      { _id: userId },
+      { image: image.secure_url },
+      { new: true }
+    );
+    //return res;
+    return res.status(200).json({
+      success: true,
+      message: "dp updated successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "dp not updated, something went wrong",
+      error: error.message,
+    });
+  }
+};
+
+exports.getEnrolledCourses = async (req, res) => {
+  try {
+    //get userId
+    const userId = req.user.id;
+    //get userDetails
+    const userDetails = await UserModel.findById({ _id: userId })
+      .populate("courses")
+      .exec();
+    if (!userDetails) {
+      return res.status(400).json({
+        success: false,
+        message: `Could not find user with id: ${userDetails}`,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      data: userDetails.courses,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
