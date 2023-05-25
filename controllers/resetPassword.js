@@ -14,9 +14,9 @@ exports.resetPasswordToken = async (req, res) => {
       });
     }
     //token generation
-    const token = crypto.randomUUID();
+    const token = crypto.randomBytes(20).toString("hex");
     //link creation
-    const url = `http://localhost:3000/${token}`;
+    const url = `http://localhost:3000/update-password/${token}`;
     //update user by adding token and expiry time
     const updateUserDetails = await UserModel.findOneAndUpdate(
       { email: email },

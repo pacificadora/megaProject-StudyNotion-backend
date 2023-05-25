@@ -30,7 +30,9 @@ async function sendVerificationMail(email, otp) {
 }
 
 otpSchema.pre("save", async function (next) {
-  await sendVerificationMail(this.email, this.otp);
+  if (this.isNew) {
+    await sendVerificationEmail(this.email, this.otp);
+  }
   next();
 });
 
