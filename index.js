@@ -32,3 +32,21 @@ app.use(
     tempFileDir: "/tmp",
   })
 );
+
+cloudinaryConnect();
+
+app.use("/api/v1/auth", userRoutes);
+app.use("/api/v1/course", courseRoutes);
+app.use("/api/v1/profile", profileRoutes);
+app.use("/api/v1/payment", paymentRoutes);
+
+app.use("/", (req, res) => {
+  return res.statusCode(200).json({
+    success: true,
+    message: "Your server is up and running...",
+  });
+});
+
+app.listen(port, () => {
+  console.log(`app is running at port ${port}`);
+});

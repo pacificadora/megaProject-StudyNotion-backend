@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const profileSchema = mongoose.model({
+const profileSchema = new mongoose.Schema({
   gender: {
     type: String,
   },
