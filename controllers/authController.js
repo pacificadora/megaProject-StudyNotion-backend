@@ -7,10 +7,11 @@ const jwt = require("jsonwebtoken");
 const mailSenderForVerification = require("../utils/mailSender");
 require("dotenv").config();
 //sendotp
-exports.sendOtp = async () => {
+exports.sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
-    const userPresent = await userModel.find({ email });
+    console.log(email);
+    const userPresent = await userModel.findOne({ email });
     if (userPresent) {
       return res.status(400).json({
         success: false,
@@ -26,14 +27,12 @@ exports.sendOtp = async () => {
     console.log("opt-generated", otp);
 
     let checkOtpUnique = await otpModel.findOne({ otp: otp });
-
-    while (result) {
-      let otp = otpGenerator.generate(6, {
+    console.log("Result is Generate OTP Func");
+    console.log("Result", checkOtpUnique);
+    while (checkOtpUnique) {
+      otp = otpGenerator.generate(6, {
         upperCaseAlphabets: false,
-        lowerCaseAlphabets: false,
-        specialChars: false,
       });
-      checkOtpUnique = await otpModel.findOne({ otp: otp });
     }
 
     //create an entry in otp model
@@ -42,6 +41,7 @@ exports.sendOtp = async () => {
     return res.status(200).json({
       success: true,
       message: "Otp sent Successfully",
+      otp,
     });
   } catch (error) {
     return res.status(401).json({
@@ -52,14 +52,13 @@ exports.sendOtp = async () => {
 };
 
 //signup
-exports.signUp = async () => {
+exports.signUp = async (req, res) => {
   try {
     //data fetch
     const {
       email,
       firstName,
       lastName,
-      phoneNo,
       password,
       confirmPassword,
       otp,
@@ -95,13 +94,14 @@ exports.signUp = async () => {
       .find({ email })
       .sort({ createdAt: -1 })
       .limit(1);
+    console.log(recentOtp);
     if (recentOtp.length === 0) {
       return res.status(400).json({
         success: false,
         message: "otp not found",
       });
     }
-    if (recentOtp[0] !== otp) {
+    if (recentOtp[0].otp !== otp) {
       return res.status(400).json({
         success: false,
         message: "otp does not match",
@@ -111,6 +111,10 @@ exports.signUp = async () => {
     //hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create the user
+    let approved = "";
+    approved === "Instructor" ? (approved = false) : (approved = true);
+
     //create a profile
     const profileDetails = await profileModel.create({
       gender: null,
@@ -119,16 +123,25 @@ exports.signUp = async () => {
       contactNumber: null,
     });
 
+    console.log(
+      firstName,
+      lastName,
+      email,
+      hashedPassword,
+      accountType,
+      profileDetails._id
+    );
     const user = await userModel.create({
       firstName,
       lastName,
       email,
-      phoneNo,
-      password: hashedPassword,
-      accountType,
+      password,
+      accountType: accountType,
+      approved: approved,
       additionalDetails: profileDetails._id,
       image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`,
     });
+    console.log("yha aaya", user);
     return res.status(201).json({
       success: true,
       user,
@@ -136,6 +149,7 @@ exports.signUp = async () => {
     });
   } catch (error) {
     return res.status(400).json({
+      error: error.message,
       success: false,
       message: "user cannot be registered, please try again",
     });
@@ -143,7 +157,7 @@ exports.signUp = async () => {
 };
 
 //login
-exports.login = async () => {
+exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -167,7 +181,8 @@ exports.login = async () => {
 
     //match password
     const matchPassword = await bcrypt.compare(password, userDetails.password);
-    if (!matchPassword) {
+    console.log(matchPassword);
+    if (matchPassword) {
       return res.status(400).json({
         success: false,
         message: "password does not match",
@@ -185,6 +200,11 @@ exports.login = async () => {
     userDetails.token = token;
     userDetails.password = undefined;
 
+    const options = {
+      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      httpOnly: true,
+    };
+
     res.cookie("token", token, options).status(200).json({
       success: true,
       token,
@@ -193,6 +213,7 @@ exports.login = async () => {
     });
   } catch (error) {
     return res.status(400).json({
+      error: error.message,
       success: false,
       message: "something went wrong, login failure, please try again",
     });

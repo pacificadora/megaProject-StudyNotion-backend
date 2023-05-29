@@ -32,7 +32,10 @@ async function sendVerificationEMail(email, otp) {
       emailTemplate(otp)
     );
     console.log("email sent successfully", mailResp);
-  } catch (error) {}
+  } catch (error) {
+    console.log("Error occurred while sending email: ", error);
+    throw error;
+  }
 }
 
 otpSchema.pre("save", async function (next) {

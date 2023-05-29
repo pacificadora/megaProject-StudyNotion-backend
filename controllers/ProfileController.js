@@ -33,6 +33,7 @@ exports.updateProfile = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "profile details are saved successfully",
+      data: profileDetails,
     });
     //return response
   } catch (error) {
@@ -135,12 +136,13 @@ exports.updateDisplayPicture = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "dp updated successfully",
+      data: updatedProfile,
     });
   } catch (error) {
     return res.status(500).json({
+      error: error.message,
       success: false,
       message: "dp not updated, something went wrong",
-      error: error.message,
     });
   }
 };
